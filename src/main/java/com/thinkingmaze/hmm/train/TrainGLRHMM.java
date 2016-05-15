@@ -353,20 +353,18 @@ public class TrainGLRHMM extends Training {
 		hmm.setStateTransitProbMatrix(newTransitMatrix);
 		hmm.setEmissionProbMatrix(newEmissionMatrix);
 		hmm.setPiMatrix(newPiMatrix);
-		printUpdate();
+		//printUpdate();
 	}
 	
 	public double forward() {
 		// TODO Auto-generated method stub
-		double min = 1.0;
+		double sum = 0.0;
 		for(int i = 1; i <= observations.getSize(); i++){
-			Observation  observation = (Observation) observations.getChild(i);
-			double sum = 0.0;
+			Observation  observation = (Observation) observations.getChild(i);			
 			for(int s = 1; s <= this.stateLength; s++){
 				sum += alpha(i,observation.getVectorLength(),s);
 			}
-			min = Math.min(min, sum);
 		}
-		return min;
+		return sum/observations.getSize();
 	}
 }

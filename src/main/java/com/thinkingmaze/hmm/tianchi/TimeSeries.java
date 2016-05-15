@@ -1,8 +1,12 @@
-package com.tinkingmaze.hmm.tianchi;
+package com.thinkingmaze.hmm.tianchi;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 import java.util.Scanner;
 
 import com.thinkingmaze.hmm.GLRHMM;
@@ -13,34 +17,49 @@ import com.thinkingmaze.hmm.train.TrainGLRHMM;
 import com.thinkingmaze.hmm.train.Training;
 
 public class TimeSeries {
+	private String possionFilePath;
 	private String trainFilePath;
 	private String testFilePath;
+	private String predictFilePath;
 	private int obsNumber;
 	private int obsLength;
 	private final int deltaLength;
-	private double[][] real;
-	private double[] lamda;
-	private int l;
-	private int r;
+	private int[][] real;
+	private double[] lamdas;
+	private Random rng;
 	
-	public TimeSeries(String trainFilePath, String testFilePath, int obsNumber, int obsLength, int deltaLength) {
+	public TimeSeries(String possionFilePath, String trainFilePath, String testFilePath, 
+			String predictFilePath, int obsNumber, int obsLength) throws FileNotFoundException {
+		this.possionFilePath = possionFilePath;
 		this.trainFilePath = trainFilePath;
 		this.testFilePath = testFilePath;
+		this.predictFilePath = predictFilePath;
 		this.obsNumber = obsNumber;
 		this.obsLength = obsLength;
-		this.deltaLength = deltaLength;
-		this.lamda = new double[deltaLength];
-		this.l = 0;
-		this.r = 500;
-		double segment = (r-l+1.0)/(deltaLength-1);
-		for(int i = 0; i < deltaLength; i++){
-			this.lamda[i] = l+i*segment+segment/2;
-		}
+		this.deltaLength = setLamda();
+		this.rng = new Random(2234);
 	}
 	
-	public void run(String predictFilePath) throws IOException {
+	private int setLamda() throws FileNotFoundException {
+		// TODO Auto-generated method stub
+		Scanner sin = new Scanner(new File(possionFilePath));
+		List<Double> tempLamda = new ArrayList<Double>();
+		while(sin.hasNextLine()){
+			String[] line = sin.nextLine().split(",");
+			for(String str : line){
+				tempLamda.add(Double.parseDouble(str));
+			}
+		}
+		this.lamdas = new double[tempLamda.size()];
+		for(int i = 0; i < tempLamda.size(); i++)
+			this.lamdas[i] = tempLamda.get(i);
+		sin.close();
+		return this.lamdas.length;
+	}
+
+	public void run() throws IOException {
 		Observations obs = getObservation(trainFilePath, obsNumber, obsLength, false);
-		crossValidate(predictFilePath, testFilePath, obs, 10, this.deltaLength);
+		crossValidate(obs, 10, this.deltaLength);
 	}
 
 	/**
@@ -61,20 +80,16 @@ public class TimeSeries {
 	public Observations getObservation(String filename, int obsNumber, int obsLength, boolean show) {
 
 		int[][] result = new int[obsNumber][obsLength];
-		this.real = new double[obsNumber][obsLength];
+		this.real = new int[obsNumber][obsLength];
 		try {
 			File file = new File(filename);
 			Scanner scan = new Scanner(file);
 			if(filename.endsWith(".csv")){
 				for(int i = 0; i < result.length; i++){
 					String[] lines = scan.nextLine().split(",");
-					double segment = (r-l+1.0)/(deltaLength-1);
 					for (int j = 0; j < result[0].length; j++){
-						real[i][j] = Double.parseDouble(lines[j+1]);
-						int temp = (int) ((Double.parseDouble(lines[j+1])-l)/segment + 1);
-						if(temp > 50)
-						if(temp > deltaLength)
-							temp = deltaLength;
+						real[i][j] = Integer.parseInt(lines[j+1]);
+						int temp = getDelta(real[i][j]);
 						if(show) System.out.print(temp + " ");
 						result[i][j] = temp;
 					}
@@ -116,7 +131,24 @@ public class TimeSeries {
 		return observations;
 	}
 
-	@SuppressWarnings("unused")
+	private int getDelta(int d) {
+		// TODO Auto-generated method stub
+		double[] p = new double[this.lamdas.length];
+		double sum = 0;
+		for(int i = 0; i < this.lamdas.length; i++){
+			p[i] = getPoisson(this.lamdas[i],d);
+			sum += p[i];
+		}
+		if(sum <= 0.0)
+			throw new NullPointerException("getDelta: sum <= 0.0.");
+		double r = rng.nextDouble();
+		for(int i = 0; i < this.lamdas.length; i++){
+			if(r <= p[i]/sum) return i+1;
+			r -= p[i]/sum;
+		}
+		return 1;
+	}
+
 	private double getPoisson(double lamda, int k){
 		double res = 1.0;
 		for(int i = 1, j = 1; i <= k || j <= lamda;){
@@ -138,6 +170,8 @@ public class TimeSeries {
 		return res = res/Math.exp(lamda-(int)(lamda));
 	}
 	
+	
+	
 	/**
 	 * Reads into an instance of Observations and performs a cross-validation by
 	 * training on each of the data.
@@ -154,28 +188,30 @@ public class TimeSeries {
 	 * @throws IOException 
 	 */
 
-	public void crossValidate(String predictFilePath, String testFilePath, Observations obs, 
-			int stateLength, int delta) throws IOException {
+	public void crossValidate( Observations obs, 
+			int stateLength, int deltaLength ) throws IOException {
 		Scanner sin = new Scanner(new File(testFilePath));
 		FileWriter predictFile = new FileWriter(new File(predictFilePath));
 		HMM timeSeriesHMM = new GLRHMM("WeatherData", stateLength, deltaLength, obs.getSize());
 		Training trainGLRHMM = new TrainGLRHMM(obs, timeSeriesHMM);
 		System.out.println("Initial Evaluation Value: " + trainGLRHMM.forward());
 		System.out.println();
-		int epoch = 50;
+		int epoch = 500;
 		for (int e = 0; e < epoch; e++) {
 
 			System.out.println("Training Observations #" + (e + 1));
 			trainGLRHMM.BaumWelch();
 			System.out.println("Running Evaluation Value: " + trainGLRHMM.forward());
 			System.out.println();
-
+			
+		}
+		System.out.println("Final Evaluation Value: " + trainGLRHMM.forward());
+		
+		while(sin.hasNext()){
 			String[] line = sin.nextLine().split(",");
-			int[] testData = new int[line.length];
-			for(int j = 1; j < testData.length; j++){
-				testData[j] = Integer.parseInt(line[j]);
+			for(int j = 1; j < line.length; j++){
 				predictFile.write(line[j]);
-				if(j+1 == testData.length)
+				if(j+1 == line.length)
 					predictFile.write("\n");
 				else
 					predictFile.write(",");
@@ -189,7 +225,6 @@ public class TimeSeries {
 					predictFile.write(",");
 			}
 		}
-		System.out.println("Final Evaluation Value: " + trainGLRHMM.forward());
 		sin.close();
 		predictFile.close();
 	}

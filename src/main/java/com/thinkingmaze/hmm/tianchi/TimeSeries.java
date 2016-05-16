@@ -11,6 +11,7 @@ import java.util.Scanner;
 
 import com.thinkingmaze.hmm.GLRHMM;
 import com.thinkingmaze.hmm.HMM;
+import com.thinkingmaze.hmm.eval.EvalGLRHMM;
 import com.thinkingmaze.hmm.observation.Observation;
 import com.thinkingmaze.hmm.observation.Observations;
 import com.thinkingmaze.hmm.train.TrainGLRHMM;
@@ -196,7 +197,7 @@ public class TimeSeries {
 		Training trainGLRHMM = new TrainGLRHMM(obs, timeSeriesHMM);
 		System.out.println("Initial Evaluation Value: " + trainGLRHMM.forward());
 		System.out.println();
-		int epoch = 500;
+		int epoch = 200;
 		for (int e = 0; e < epoch; e++) {
 
 			System.out.println("Training Observations #" + (e + 1));
@@ -206,20 +207,33 @@ public class TimeSeries {
 			
 		}
 		System.out.println("Final Evaluation Value: " + trainGLRHMM.forward());
-		
+		int obsNumber = 1;
 		while(sin.hasNext()){
 			String[] line = sin.nextLine().split(",");
-			for(int j = 1; j < line.length; j++){
+			EvalGLRHMM eval = new EvalGLRHMM(timeSeriesHMM, this.lamdas);
+			eval.setPiMatrix(timeSeriesHMM.getPiMatrix(obsNumber));
+			obsNumber += 1;
+			predictFile.write(line[0]+",");
+			System.out.println(line[0]);
+			for(int j = 2; j < line.length; j++){
 				predictFile.write(line[j]);
 				if(j+1 == line.length)
 					predictFile.write("\n");
 				else
 					predictFile.write(",");
 			}
-			for(int j = 1; j < testData.length; j++){
-				testData[j] = Integer.parseInt(line[j]);
-				predictFile.write(line[j]);
-				if(j+1 == testData.length)
+			predictFile.write(line[0]+",");
+			for(int j = 2; j < line.length; j++){
+				double[] p = new double[this.deltaLength+1];
+				for(int s = 1; s <= this.deltaLength; s++){
+					p[s] = eval.epsilon(obsLength+j, s);
+				}
+				int res = 1;
+				for(int x = 1; x < p.length; x++){
+					if(p[res] < p[x]) res = x;
+				}
+				predictFile.write(String.valueOf(this.lamdas[res-1]));
+				if(j+1 == line.length)
 					predictFile.write("\n");
 				else
 					predictFile.write(",");

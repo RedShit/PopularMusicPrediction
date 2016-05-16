@@ -70,6 +70,10 @@ public abstract class HMM {
 		return piMatrix[obsNumber - 1][stateIndex - 1];
 	}
 	
+	public double[] getPiMatrix(int obsNumber) {
+		return piMatrix[obsNumber - 1];
+	}
+	
 	public int getStateLength() {
 		return stateLength;
 	}

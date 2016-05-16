@@ -8,11 +8,7 @@ public abstract class Evaluation {
 	int stateLength;
 	int obsLength;
 	int deltaLength;
-	
-	public abstract double alpha(int obsIndex, int stateIndex);
-	
-	public abstract double forward();
-
+		
 	public abstract double epsilon(int obsIndex, int deltaIndex);
 
 }

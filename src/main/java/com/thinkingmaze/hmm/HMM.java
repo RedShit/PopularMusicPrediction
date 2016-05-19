@@ -7,18 +7,17 @@ public abstract class HMM {
 	Version versionHMM;
 	double[][] stateTransitProbMatrix;
 	double[][] emissionProbMatrix;
-	double[][] piMatrix;
+	double[] piMatrix;
 	
 	int stateLength;
 	int deltaLength;
-	int obsListNumber;
 	public String name;
 	
 	public void initialize() {
 		versionHMM = new Version(1);
 		stateTransitProbMatrix = new double[stateLength][stateLength];
 		emissionProbMatrix = new double[stateLength][deltaLength];
-		piMatrix = new double[obsListNumber][stateLength];
+		piMatrix = new double[stateLength];
 		
 		for (int i = 0; i < stateLength; i++) {
 			double sum = 0;
@@ -44,16 +43,14 @@ public abstract class HMM {
 			}
 		}
 		
-		for (int i = 0; i < obsListNumber; i++) {
-			double sum = 0;
-			
-			for (int j = 0; j < stateLength; j++) {
-				sum += piMatrix[i][j] = Math.random();
-			}
-			
-			for (int j = 0; j < stateLength; j++) {
-				piMatrix[i][j] = piMatrix[i][j] / sum;
-			}
+		double sum = 0;
+		
+		for (int j = 0; j < stateLength; j++) {
+			sum += piMatrix[j] = Math.random();
+		}
+		
+		for (int j = 0; j < stateLength; j++) {
+			piMatrix[j] = piMatrix[j] / sum;
 		}
 		
 	}
@@ -66,12 +63,8 @@ public abstract class HMM {
 		return emissionProbMatrix[stateIndex - 1][obsIndex - 1];
 	}
 	
-	public double getPiMatrix(int obsNumber, int stateIndex) {
-		return piMatrix[obsNumber - 1][stateIndex - 1];
-	}
-	
-	public double[] getPiMatrix(int obsNumber) {
-		return piMatrix[obsNumber - 1];
+	public double getPiMatrix(int stateIndex) {
+		return piMatrix[stateIndex - 1];
 	}
 	
 	public int getStateLength() {
@@ -102,12 +95,12 @@ public abstract class HMM {
 		getVersionHMM().update();
 	}
 	
-	public void setPiMatrix(double pi, int i, int j) {
-		this.piMatrix[i - 1][j - 1] = pi;
+	public void setPiMatrix(double pi, int i) {
+		this.piMatrix[i - 1] = pi;
 		getVersionHMM().update();
 	}
 	
-	public void setPiMatrix(double[][] piMatrix) {
+	public void setPiMatrix(double[] piMatrix) {
 		this.piMatrix = piMatrix;
 		getVersionHMM().update();
 	}

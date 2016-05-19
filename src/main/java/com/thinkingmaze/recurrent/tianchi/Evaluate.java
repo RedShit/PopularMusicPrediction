@@ -5,8 +5,8 @@ import java.io.FileNotFoundException;
 import java.util.Scanner;
 
 public class Evaluate {
-	private static final String predictFilePath = "C:/Users/star/git/PopularMusicPrediction/target/mars_tianchi_predict_data.csv";
-	public static void f1Value(String predictFilePath) throws FileNotFoundException{
+	private static final String predictFilePath = "D:/MyEclipse/alibaba/mars_tianchi_predict_data.csv";
+	public static String f1Value(String predictFilePath) throws FileNotFoundException{
 		int artistNum = 50;
 		int predictDays = 60;
 		Scanner sin = new Scanner(new File(predictFilePath));
@@ -14,14 +14,16 @@ public class Evaluate {
 		int currIdx = 0;
 		while(sin.hasNextLine()){
 			predict[currIdx] = new double[predictDays];
-			String[] strs = sin.nextLine().split(",");
-			for(int i = 0; i < predictDays; i++)
-				predict[currIdx][i] = Double.valueOf(strs[i+1]);
+			String line = sin.nextLine();
+			String[] strs = line.split(",");
+			for(int i = 0; i < strs.length; i++)
+				predict[currIdx][i] = Double.valueOf(strs[i]);
 			currIdx +=1;
 		}
 		double f1 = 0.0;
 		double optF1 = 0.0;
 		for(int i = 0; i < artistNum; i++){
+			
 			int index = i*2;
 			double alpha = 0.0;
 			int N = predictDays;
@@ -30,17 +32,20 @@ public class Evaluate {
 				double S = predict[index+1][j];
 				double T = predict[index][j];
 				if(T == 0) continue;
+				
 				alpha = alpha + ((S-T)/T)*((S-T)/T);
 				sum = sum + T;
 			}
 			alpha = Math.sqrt(alpha/N);
+			if(alpha > 1) alpha = 1;
+			System.out.println(i + " " + (1.0-alpha) + " " + Math.sqrt(sum));
 			f1 = f1 + (1.0-alpha)*Math.sqrt(sum);
 			optF1 = optF1 + Math.sqrt(sum);
 		}
 		sin.close();
-		System.out.println(f1 + " " + optF1 + " " + (100.0*f1/optF1) + "%");
+		return (f1 + " " + optF1 + " " + (100.0*f1/optF1) + "%");
 	}
 	public static void main(String[] args) throws FileNotFoundException{
-		f1Value(predictFilePath);
+		System.out.println(f1Value(predictFilePath));
 	}
 }

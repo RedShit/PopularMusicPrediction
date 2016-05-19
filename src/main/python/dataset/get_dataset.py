@@ -50,7 +50,7 @@ def get_artist_actions(actions, songs):
     return res
 
 def get_predict(actions_type, gmt_time, key, \
-                            feature_days = 1, predict_days = 60):
+                            feature_days = 11, predict_days = 60):
     res = []
     res.append(key)
     for x in range(-feature_days, 0):
@@ -64,7 +64,7 @@ def get_predict(actions_type, gmt_time, key, \
     return [str(i) for i in res]
 
 def create_data_file(train_file_path, test_file_path, data_type, \
-                     feature_days = 1, predict_days = 60, gmt_start = 16495, predict_gmt = 16617):
+                     feature_days = 11, predict_days = 60, gmt_start = 16495, predict_gmt = 16617):
     train_file = csv.writer(file(train_file_path, 'wb'))
     test_file = csv.writer(file(test_file_path, 'wb'))
     for key in data_type.keys():

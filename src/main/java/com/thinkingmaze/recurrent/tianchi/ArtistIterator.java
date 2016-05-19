@@ -3,12 +3,11 @@ package com.thinkingmaze.recurrent.tianchi;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Random;
+import java.util.Scanner;
 
 import org.deeplearning4j.datasets.iterator.DataSetIterator;
 import org.nd4j.linalg.api.ndarray.INDArray;
@@ -27,22 +26,23 @@ import org.nd4j.linalg.factory.Nd4j;
  */
 public class ArtistIterator implements DataSetIterator {
 	private static final long serialVersionUID = -7287833919126626356L;
-	private int[][] dataFile;
-	private double[][] characters;
-	private double[][] realFile;
+	private int[] characters;
+	private List<List<Integer>> file;
+	private List<List<Integer>> realFile;
+	private List<String> artistId;
+	private List<Double> actionNumber;
+	private int[][] realOutput;
 	private int exampleLength;
 	private int miniBatchSize;
 	private int numExamplesToFetch;
 	private int examplesSoFar = 0;
 	private Random rng;
 	private int numCharacters;
-	private final boolean alwaysRandomCreate;
-	private final double lowerBound = 1.2;
-	private final double upperBound = 3.0;
-	private final int featrueDays = 30;
+	private final boolean alwaysRandomData;
+	private List<String> nextArtistId;
 	
-	public ArtistIterator(String path, int miniBatchSize, int exampleSize, int numExamplesToFetch, boolean alwaysRandomCreate ) throws IOException {
-		this(path,Charset.defaultCharset(),miniBatchSize,exampleSize,numExamplesToFetch, 10, new Random(),alwaysRandomCreate);
+	public ArtistIterator(String path, int miniBatchSize, int numExamplesToFetch,int exampleLength,boolean alwaysRandomData ) throws IOException {
+		this(path,miniBatchSize,numExamplesToFetch,exampleLength,getDefultCharacters(7000),new Random(),alwaysRandomData);
 	}
 
 	/**
@@ -52,98 +52,97 @@ public class ArtistIterator implements DataSetIterator {
 	 * @param exampleLength Number of characters in each input/output vector
 	 * @param numExamplesToFetch Total number of examples to fetch (must be multiple of miniBatchSize). Used in hasNext() etc methods
 	 * @param rng Random number generator, for repeatability if required
-	 * @param alwaysRandomCreate if true, we find a new data created by random
+	 * @param alwaysRandomData if true, we find a new data created by random
 	 * @throws IOException If text file cannot  be loaded
 	 */
-	public ArtistIterator(String textFilePath, Charset textFileEncoding, int miniBatchSize, int exampleLength,
-			int numExamplesToFetch, int numCharacters, Random rng, boolean alwaysRandomCreate ) throws IOException {
-		if( !new File(textFilePath).exists()) throw new IOException("Could not access file (does not exist): " + textFilePath);
-		if(numExamplesToFetch % miniBatchSize != 0 ) throw new IllegalArgumentException("numExamplesToFetch must be a multiple of miniBatchSize");
+	public ArtistIterator(String textFilePath, int miniBatchSize, int numExamplesToFetch,
+			int exampleLength, int[] characters, Random rng, boolean alwaysRandomData ) throws IOException {
+		if( !new File(textFilePath).exists()) 
+			throw new IOException("Could not access file (does not exist): " + textFilePath);
+		if(numExamplesToFetch % miniBatchSize != 0 ) 
+			throw new IllegalArgumentException("numExamplesToFetch must be a multiple of miniBatchSize");
 		if( miniBatchSize <= 0 ) throw new IllegalArgumentException("Invalid miniBatchSize (must be >0)");
-		this.exampleLength = exampleLength;
 		this.miniBatchSize = miniBatchSize;
 		this.numExamplesToFetch = numExamplesToFetch;
-		this.numCharacters = numCharacters;
+		this.exampleLength = exampleLength;
+		this.numCharacters = characters.length;
+		this.characters = characters;
 		this.rng = rng;
-		this.alwaysRandomCreate = alwaysRandomCreate;
-		
-		
-		//Load file and convert contents to a char[] 
-		List<String> lines = Files.readAllLines(new File(textFilePath).toPath(),textFileEncoding);
-		int maxSize = lines.size();
-		this.characters = new double[maxSize][];
-		this.dataFile = new int[maxSize][];
-		this.realFile = new double[maxSize][];
-		int currIdx = 0;
-		for( String line : lines ){
-			String[] strs = line.split(",");
-			if(strs.length < exampleLength)
-				throw new IllegalArgumentException("Data must be more than exampleLength");
-			this.dataFile[currIdx] = new int[exampleLength];
-			this.realFile[currIdx] = new double[exampleLength+1];
-			this.characters[currIdx] = new double[numCharacters];
-			this.realFile[currIdx][0] = Double.valueOf(strs[0]);
-			for(int i = 0; i < exampleLength; i++){
-				this.realFile[currIdx][i+1] = Double.valueOf(strs[i+1]);
+		this.alwaysRandomData = alwaysRandomData;
+		this.artistId = new ArrayList<String>();
+		this.file = new ArrayList<List<Integer>>();
+		this.realFile = new ArrayList<List<Integer>>();
+		this.actionNumber = new ArrayList<Double>();
+		this.nextArtistId = null;
+		Scanner sin = new Scanner(new File(textFilePath));
+		while(sin.hasNext()){
+			String[] line = sin.nextLine().split(",");
+			List<Integer> sentence = new ArrayList<Integer>();
+			List<Integer> realSentence = new ArrayList<Integer>();
+			this.artistId.add(line[0]);
+			double action = 0;
+			for(int i = 1; i < line.length; i++){
+				sentence.add(characterToIndex(Integer.parseInt(line[i])));
+				realSentence.add(Integer.parseInt(line[i]));
+				action += Integer.parseInt(line[i]);
 			}
-			this.characters[currIdx] = getCharacters(this.realFile[currIdx]);
-			for(int i = 0; i < exampleLength; i++){
-				this.dataFile[currIdx][i] = getCharacterIdx(Double.valueOf(strs[i+1]), this.characters[currIdx]);
-			}
-			currIdx += 1;
+			this.actionNumber.add(Math.sqrt(action));
+			this.file.add(sentence);
+			this.realFile.add(realSentence);
 		}
-		
-		System.out.println("Loaded and converted file: " + maxSize);
+		sin.close();
+		System.out.println("Loaded and converted file: " + this.artistId.size());
 	}
 	
-	private int getCharacterIdx(final double value, final double[] characters){
+	private static int[] getDefultCharacters(int maxValue) {
 		// TODO Auto-generated method stub
-		double prePredict = 0;
-		for(int i = 0; i < this.numCharacters; i++){
-			double currPredict = characters[i];
-			if(Math.abs(currPredict-value) > Math.abs(prePredict-value)){
-				return (i==0)?i:i-1;
-			}
-			prePredict = currPredict;
+		if(maxValue < 1)
+			throw new NumberFormatException("maxValue = "+maxValue+" < 1");
+		List<Integer> res = new ArrayList<Integer>();
+		int value = 1;
+		while(value < maxValue){
+			res.add(value);
+			value = (int) (value*1.2+0.99);
 		}
-		return this.numCharacters-1;
-	}
-	
-	private double[] getCharacters(final double[] realFile) {
-		// TODO Auto-generated method stub
-		double lValue = Double.MAX_VALUE;
-		double rValue = realFile[0];
-		for(int i = 1; i <= this.featrueDays; i++){
-			lValue = Math.min(lValue, realFile[i]);
-		}
-		lValue = lValue*lowerBound;
-		rValue = rValue*upperBound;
-		lValue = Math.min(rValue, lValue);
-		double deta = (rValue-lValue)/(numCharacters-1);
-		List<Double> res = new ArrayList<Double>();
-		for(int i = 0; i < this.numCharacters; i++){
-			res.add(lValue+i*deta);
-		}
-		double[] out = new double[res.size()];
-		for(int i = 0; i < res.size(); i++)
+		int[] out = new int[res.size()];
+		for(int i = 0; i < out.length; i++)
 			out[i] = res.get(i);
 		return out;
 	}
 	
+	public int characterToIndex(int value){
+		for(int i = 1; i < characters.length; i++){
+			if(Math.abs(characters[i]-value) > Math.abs(characters[i-1]-value))
+				return i-1;
+		}
+		return characters.length-1;
+	}
+	
+	private int getRandomArtistId(){
+		double sum = 0, d = rng.nextDouble();
+		for(double action : actionNumber){
+			sum += action;
+		}
+		for(int id = 0; id < actionNumber.size(); id++){
+			if(d <= actionNumber.get(id)/sum)
+				return id;
+			d -= actionNumber.get(id)/sum;
+		}
+		throw new IllegalArgumentException("Distribution is invalid? sum="+sum);
+	}
+	
 	public boolean hasNext() {
-		if(!this.alwaysRandomCreate)
-			return examplesSoFar + miniBatchSize <= this.dataFile.length;
+		if(!this.alwaysRandomData)
+			return examplesSoFar + miniBatchSize <= this.file.size();
 		return examplesSoFar + miniBatchSize <= numExamplesToFetch;
 	}
 	
-	public double[] realData(){
-		if(examplesSoFar<=0 || examplesSoFar>numExamplesToFetch)  throw new NoSuchElementException();
-		return this.realFile[examplesSoFar-1];
+	public List<String> getNextArtistId(){
+		return nextArtistId;
 	}
 	
-	public double characterIdx2Value(int idx){
-		if(examplesSoFar<=0 || examplesSoFar>numExamplesToFetch)  throw new NoSuchElementException();
-		return this.characters[examplesSoFar-1][idx];
+	public int[][] getRealOutput(){
+		return realOutput;
 	}
 	
 	public DataSet next() {
@@ -151,28 +150,35 @@ public class ArtistIterator implements DataSetIterator {
 	}
 
 	public DataSet next(int num) {
-		if(!this.alwaysRandomCreate && examplesSoFar+num>this.dataFile.length){
+		if(!this.alwaysRandomData && examplesSoFar+num>this.file.size())
 			throw new NoSuchElementException();
-		}
-		if( examplesSoFar+num > numExamplesToFetch ) throw new NoSuchElementException();
+		if( examplesSoFar+num > numExamplesToFetch ) 
+			throw new NoSuchElementException();
+		
 		//Allocate space:
 		INDArray input = Nd4j.zeros(num,numCharacters,exampleLength);
 		INDArray labels = Nd4j.zeros(num,numCharacters,exampleLength);
 				
 		//Randomly select a subset of the file. No attempt is made to avoid overlapping subsets
 		// of the file in the same minibatch
+		nextArtistId = new ArrayList<String>();
+		realOutput = new int[num][exampleLength];
 		for( int i=0; i<num; i++ ){
-			int artistIdx = (int) (rng.nextDouble()*this.dataFile.length);
-			if(this.alwaysRandomCreate == false)
+			int artistIdx = getRandomArtistId();
+			if(this.alwaysRandomData == false)
 				artistIdx = examplesSoFar+i;
-			int currCharIdx = 0;
-			for( int j=0, c=0; j<exampleLength; j++, c++ ){
-				int nextCharIdx = this.dataFile[artistIdx][j];              		//Next character to predict
-				input.putScalar(new int[]{i,currCharIdx,c}, 1.0);
-				double[] label = getLabel(this.characters[artistIdx], this.realFile[artistIdx][j+1]);
-				for(int k = 0; k < label.length; k++){
-					labels.putScalar(new int[]{i,k,c}, label[k]);
-				}
+			if(file.get(artistIdx).size()<exampleLength+1)
+				throw new NoSuchElementException("artistId = "+artistId.get(artistIdx)+" length < "+exampleLength+1);
+			nextArtistId.add(artistId.get(artistIdx));
+			int startIdx = (int) (rng.nextDouble()*(file.get(artistIdx).size()-exampleLength-1));
+			if(this.alwaysRandomData == false)
+				startIdx = 0;
+			int currCharIdx = file.get(artistIdx).get(startIdx);
+			for( int j=0; j<exampleLength; j++ ){
+				int nextCharIdx = file.get(artistIdx).get(startIdx+j+1);
+				input.putScalar(new int[]{i,currCharIdx,j}, 1.0);
+				labels.putScalar(new int[]{i,nextCharIdx,j}, 1.0);
+				realOutput[i][j] = realFile.get(artistIdx).get(startIdx+j+1);
 				currCharIdx = nextCharIdx;
 			}
 		}
@@ -180,23 +186,6 @@ public class ArtistIterator implements DataSetIterator {
 		examplesSoFar += num;
 		return new DataSet(input,labels);
 	}
-
-	private double[] getLabel(double[] ds, double real) {
-		// TODO Auto-generated method stub
-		double Z = 0;
-		double[] label = new double[ds.length];
-		for(int i = 0; i < ds.length; i++){
-			real = Math.max(real, 1.0);
-			double e = Math.abs(ds[i]-real)/real;
-			label[i] = Math.exp(-e);
-			Z += label[i];
-		}
-		for(int i = 0; i < ds.length; i++){
-			label[i] = label[i]/Z;
-		}
-		return label;
-	}
-
 	public int totalExamples() {
 		return numExamplesToFetch;
 	}
@@ -207,10 +196,6 @@ public class ArtistIterator implements DataSetIterator {
 
 	public int totalOutcomes() {
 		return numCharacters;
-	}
-	
-	public int getInitialCharacter(){
-		return 0;
 	}
 
 	public void reset() {
@@ -238,6 +223,12 @@ public class ArtistIterator implements DataSetIterator {
 		throw new UnsupportedOperationException("Not implemented");
 	}
 
+	public int getCharacterValue(int index){
+		if(index >= characters.length)
+			throw new RuntimeException("index="+index+" > characters.length="+characters.length);
+		return characters[index];
+	}
+	
 	@Override
 	public void remove() {
 		throw new UnsupportedOperationException();

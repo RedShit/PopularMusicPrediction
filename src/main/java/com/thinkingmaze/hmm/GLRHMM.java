@@ -5,18 +5,17 @@ import com.thinkingmaze.hmm.version.Version;
 public class GLRHMM extends HMM{
 
 	// Used for training
-	public GLRHMM(String name, int stateLength, int deltaLength, int obsListNumber) {
+	public GLRHMM(String name, int stateLength, int deltaLength) {
 		super.stateLength = stateLength;
 		super.deltaLength = deltaLength;
 		super.name = name;
-		super.obsListNumber = obsListNumber;
 		super.versionHMM = new Version(1);
 		initialize();
 	}
 
 	// Used for Decoding and Evaluation
 	public GLRHMM(String name, double[][] stateTransitProbMatrix,
-			double[][] emissionProbMatrix, double[][] piMatrix) {
+			double[][] emissionProbMatrix, double[] piMatrix) {
 		super.stateTransitProbMatrix = stateTransitProbMatrix;
 		super.emissionProbMatrix = emissionProbMatrix;
 		super.piMatrix = piMatrix;
@@ -31,18 +30,13 @@ public class GLRHMM extends HMM{
 		
 		stateTransitProbMatrix = new double[stateLength][stateLength];
 		emissionProbMatrix = new double[stateLength][deltaLength];
-		piMatrix = new double[obsListNumber][stateLength];
+		piMatrix = new double[stateLength];
 		
 		for (int i = 0; i < stateLength; i++) {
 			double sum = 0;
 			
 			for (int j = 0; j < stateLength; j++) {
-				
-				if (j < i) {
-					stateTransitProbMatrix[i][j] = 0;
-				} else {
-					sum += stateTransitProbMatrix[i][j] = Math.random();
-				}
+				sum += stateTransitProbMatrix[i][j] = Math.random();
 			}
 			
 			for (int j = 0; j < stateLength; j++) {
@@ -62,16 +56,14 @@ public class GLRHMM extends HMM{
 			}
 		}
 		
-		for (int i = 0; i < obsListNumber; i++) {
-			double sum = 0;
-			
-			for (int j = 0; j < stateLength; j++) {
-				sum += piMatrix[i][j] = Math.random();
-			}
-			
-			for (int j = 0; j < stateLength; j++) {
-				piMatrix[i][j] = piMatrix[i][j] / sum;
-			}
+		double sum = 0;
+		
+		for (int j = 0; j < stateLength; j++) {
+			sum += piMatrix[j] = Math.random();
+		}
+		
+		for (int j = 0; j < stateLength; j++) {
+			piMatrix[j] = piMatrix[j] / sum;
 		}
 	}
 }

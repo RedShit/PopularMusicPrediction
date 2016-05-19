@@ -4,10 +4,7 @@ import java.io.IOException;
 
 public class TimeSeriesTest {
 	
-	private static final int ObservationLength = 120;
-	private static final int numberOfObservations = 50; //9657;
-	private static final String possionFilePath = 
-			"C:/Users/star/git/PopularMusicPrediction/target/mars_tianchi_poisson_data.csv";
+	private static final int stuteLength = 50; //9657;
 	private static final String trainFilePath = 
 			"C:/Users/star/git/PopularMusicPrediction/target/mars_tianchi_train_data.csv";
 	private static final String testFilePath = 
@@ -18,8 +15,7 @@ public class TimeSeriesTest {
 		
 		TimeSeries test;
 		try {
-			test = new TimeSeries(possionFilePath, trainFilePath, testFilePath, predictFilePath, 
-					numberOfObservations, ObservationLength);
+			test = new TimeSeries(trainFilePath, testFilePath, predictFilePath, stuteLength);
 			test.run();
 		} catch (IOException e1) {
 			// TODO Auto-generated catch block

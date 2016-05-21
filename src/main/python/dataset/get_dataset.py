@@ -13,11 +13,13 @@ def load_data(load_file_path, query_action_type = '1'):
     print "Load data", load_file_path, " query_action_type", query_action_type
     fd_stdin = csv.reader(file(load_file_path, 'rb'))
     res = {}
+    gmt_max = 0
     if (re.search('actions.csv', load_file_path)):
         for line in fd_stdin:
             #user_id = line[0]
             song_id = line[1]
             gmt_create = int(line[2])/3600/24
+            gmt_max = max(gmt_create, gmt_max)
             action_type = line[3]
             if(query_action_type != action_type):
                 continue
@@ -77,6 +79,11 @@ def create_data_file(train_file_path, test_file_path, data_type, \
         train_file.writerow([str(i) for i in line])
         line = get_predict(actions_type, predict_gmt, key)
         test_file.writerow(line)
+
+def get_artist_id_file(artist_id_file_path, data_type):
+    artist_id_file = csv.writer(file(artist_id_file_path, 'wb'))
+    for key in data_type.keys():
+        artist_id_file.writerow([key])
         
 if __name__ == '__main__':
     load_actions_file_path = 'D:/MyEclipse/alibaba/mars_tianchi_user_actions.csv'
@@ -91,3 +98,5 @@ if __name__ == '__main__':
     train_file_path = 'D:/MyEclipse/alibaba/mars_tianchi_train_data.csv'
     test_file_path = 'D:/MyEclipse/alibaba/mars_tianchi_test_data.csv'
     create_data_file(train_file_path, test_file_path, data_type)
+    artist_id_file_path = 'D:/MyEclipse/alibaba/mars_tianchi_artist_id.csv'
+    get_artist_id_file(artist_id_file_path, data_type)

@@ -41,8 +41,10 @@ public class ArtistIterator implements DataSetIterator {
 	private final boolean alwaysRandomData;
 	private List<String> nextArtistId;
 	
-	public ArtistIterator(String path, int miniBatchSize, int numExamplesToFetch,int exampleLength,boolean alwaysRandomData ) throws IOException {
-		this(path,miniBatchSize,numExamplesToFetch,exampleLength,getDefultCharacters(7000),new Random(),alwaysRandomData);
+	public ArtistIterator(String path, int miniBatchSize, int numExamplesToFetch,
+			int exampleLength,boolean alwaysRandomData, String validArtistId ) throws IOException {
+		this(path,miniBatchSize,numExamplesToFetch,exampleLength,
+				getDefultCharacters(7000),new Random(),alwaysRandomData, validArtistId);
 	}
 
 	/**
@@ -55,8 +57,8 @@ public class ArtistIterator implements DataSetIterator {
 	 * @param alwaysRandomData if true, we find a new data created by random
 	 * @throws IOException If text file cannot  be loaded
 	 */
-	public ArtistIterator(String textFilePath, int miniBatchSize, int numExamplesToFetch,
-			int exampleLength, int[] characters, Random rng, boolean alwaysRandomData ) throws IOException {
+	public ArtistIterator(String textFilePath, int miniBatchSize, int numExamplesToFetch, int exampleLength,
+			int[] characters, Random rng, boolean alwaysRandomData, String validArtistId ) throws IOException {
 		if( !new File(textFilePath).exists()) 
 			throw new IOException("Could not access file (does not exist): " + textFilePath);
 		if(numExamplesToFetch % miniBatchSize != 0 ) 
@@ -79,6 +81,9 @@ public class ArtistIterator implements DataSetIterator {
 			String[] line = sin.nextLine().split(",");
 			List<Integer> sentence = new ArrayList<Integer>();
 			List<Integer> realSentence = new ArrayList<Integer>();
+			if(validArtistId != null && !validArtistId.equals(line[0]))
+				continue;
+			System.out.println(line[0] + " " + validArtistId);
 			this.artistId.add(line[0]);
 			double action = 0;
 			for(int i = 1; i < line.length; i++){

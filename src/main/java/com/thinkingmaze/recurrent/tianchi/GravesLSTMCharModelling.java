@@ -4,7 +4,11 @@ package com.thinkingmaze.recurrent.tianchi;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Random;
+import java.util.Scanner;
 
 import org.deeplearning4j.nn.api.Layer;
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
@@ -47,77 +51,87 @@ import org.nd4j.linalg.lossfunctions.LossFunctions.LossFunction;
  */
 public class GravesLSTMCharModelling {
 	public static void main( String[] args ) throws Exception {
-		int lstmLayerSize = 150;					//Number of units in each GravesLSTM layer
-		int miniBatchSize = 32;						//Size of mini batch to use when  training
-		int examplesPerEpoch = 50 * miniBatchSize;	//i.e., how many examples to learn on between generating samples
-		int exampleLength = 70;						//Length of each training example
-		int numEpochs = 60;							//Total number of training + sample generation epochs
-		// Above is Used to 'prime' the LSTM with a character sequence to continue/complete.
-		// Initialization characters must all be in CharacterIterator.getMinimalCharacterSet() by default
-		Random rng = new Random(12345);
-		
-		//Get a DataSetIterator that handles vectorization of text into something we can use to train
-		// our GravesLSTM network.
-		String trainFilePath = "D:/MyEclipse/alibaba/mars_tianchi_train_data.csv";
-		String testFilePath = "D:/MyEclipse/alibaba/mars_tianchi_test_data.csv";
-		ArtistIterator iterTrain = new ArtistIterator(trainFilePath, miniBatchSize, examplesPerEpoch, exampleLength, true);
-		ArtistIterator iterTest = new ArtistIterator(testFilePath, 1, 50, 70, false);
-		
-		//Set up network configuration:
-		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-			.optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT).iterations(1)
-			.learningRate(0.03)
-			.rmsDecay(0.95)
-			.seed(12345)
-			.regularization(false)
-			.l2(0.001)
-			.list(3)
-			.layer(0, new GravesLSTM.Builder().nIn(iterTrain.inputColumns()).nOut(lstmLayerSize)
-					.updater(Updater.RMSPROP)
-					.activation("tanh").weightInit(WeightInit.DISTRIBUTION)
-					.dist(new UniformDistribution(-0.08, 0.08)).build())
-			.layer(1, new GravesLSTM.Builder().nIn(lstmLayerSize).nOut(lstmLayerSize)
-					.updater(Updater.RMSPROP)
-					.activation("tanh").weightInit(WeightInit.DISTRIBUTION)
-					.dist(new UniformDistribution(-0.08, 0.08)).build())
-			.layer(2, new RnnOutputLayer.Builder(LossFunction.MCXENT).activation("softmax")        //MCXENT + softmax for classification
-					.updater(Updater.RMSPROP)
-					.nIn(lstmLayerSize).nOut(iterTrain.totalOutcomes()).weightInit(WeightInit.DISTRIBUTION)
-					.dist(new UniformDistribution(-0.08, 0.08)).build())
-			.pretrain(false).backprop(true)
-			.build();
-		
-		MultiLayerNetwork net = new MultiLayerNetwork(conf);
-		net.init();
-		//net.setListeners(new ScoreIterationListener(1));
-		
-		//Print the  number of parameters in the network (and for each layer)
-		Layer[] layers = net.getLayers();
-		int totalNumParams = 0;
-		for( int i=0; i<layers.length; i++ ){
-			int nParams = layers[i].numParams();
-			System.out.println("Number of parameters in layer " + i + ": " + nParams);
-			totalNumParams += nParams;
+		Scanner artistSin = new Scanner(new File("D:/MyEclipse/alibaba/mars_tianchi_artist_id.csv"));
+		while(artistSin.hasNext()){
+			String artistId = "97de6333157f35467dff271d7afb0a23"; //artistSin.next();
+			int lstmLayerSize = 150;					//Number of units in each GravesLSTM layer
+			int miniBatchSize = 32;						//Size of mini batch to use when  training
+			int examplesPerEpoch = 10 * miniBatchSize;	//i.e., how many examples to learn on between generating samples
+			int exampleLength = 70;						//Length of each training example
+			int numEpochs = 15;							//Total number of training + sample generation epochs
+			// Above is Used to 'prime' the LSTM with a character sequence to continue/complete.
+			// Initialization characters must all be in CharacterIterator.getMinimalCharacterSet() by default
+			Random rng = new Random(12345);
+			
+			//Get a DataSetIterator that handles vectorization of text into something we can use to train
+			// our GravesLSTM network.
+			String trainFilePath = "D:/MyEclipse/alibaba/mars_tianchi_train_data.csv";
+			String testFilePath = "D:/MyEclipse/alibaba/mars_tianchi_test_data.csv";
+			ArtistIterator iterTrain = 
+					new ArtistIterator(trainFilePath, miniBatchSize, 
+							examplesPerEpoch, exampleLength, true, artistId);
+			ArtistIterator iterTest = 
+					new ArtistIterator(testFilePath, 1, 50, 70, 
+							false, artistId);
+			
+			//Set up network configuration:
+			MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+				.optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT).iterations(1)
+				.learningRate(0.03)
+				.rmsDecay(0.95)
+				.seed(12345)
+				.regularization(false)
+				.l2(0.001)
+				.list(3)
+				.layer(0, new GravesLSTM.Builder().nIn(iterTrain.inputColumns()).nOut(lstmLayerSize)
+						.updater(Updater.RMSPROP)
+						.activation("tanh").weightInit(WeightInit.DISTRIBUTION)
+						.dist(new UniformDistribution(-0.08, 0.08)).build())
+				.layer(1, new GravesLSTM.Builder().nIn(lstmLayerSize).nOut(lstmLayerSize)
+						.updater(Updater.RMSPROP)
+						.activation("tanh").weightInit(WeightInit.DISTRIBUTION)
+						.dist(new UniformDistribution(-0.08, 0.08)).build())
+				.layer(2, new RnnOutputLayer.Builder(LossFunction.MCXENT).activation("softmax")        //MCXENT + softmax for classification
+						.updater(Updater.RMSPROP)
+						.nIn(lstmLayerSize).nOut(iterTrain.totalOutcomes()).weightInit(WeightInit.DISTRIBUTION)
+						.dist(new UniformDistribution(-0.08, 0.08)).build())
+				.pretrain(false).backprop(true)
+				.build();
+			
+			MultiLayerNetwork net = new MultiLayerNetwork(conf);
+			net.init();
+			net.setListeners(new ScoreIterationListener(1));
+			
+			//Print the  number of parameters in the network (and for each layer)
+			Layer[] layers = net.getLayers();
+			int totalNumParams = 0;
+			for( int i=0; i<layers.length; i++ ){
+				int nParams = layers[i].numParams();
+				System.out.println("Number of parameters in layer " + i + ": " + nParams);
+				totalNumParams += nParams;
+			}
+			System.out.println("Total number of network parameters: " + totalNumParams);
+			
+			//Do training, and then generate and print samples from network
+			for( int i=0; i<numEpochs; i++ ){
+				net.fit(iterTrain);
+				String predictFilePath = "D:/MyEclipse/alibaba/"+artistId+".csv";
+				FileWriter predictFile = new FileWriter(new File(predictFilePath));
+				sampleCharactersFromNetwork(predictFile, net, iterTest, 30, rng);
+				System.out.println("Complete " + (i+1) + " epoch.");
+				System.out.println(Evaluate.f1Value(predictFilePath));
+				iterTest.reset();
+			}
+			break;
 		}
-		System.out.println("Total number of network parameters: " + totalNumParams);
-		
-		//Do training, and then generate and print samples from network
-		for( int i=0; i<numEpochs; i++ ){
-			net.fit(iterTrain);
-			String predictFilePath = "D:/MyEclipse/alibaba/mars_tianchi_predict_data.csv";
-			sampleCharactersFromNetwork(predictFilePath, net, iterTest, 30, rng);
-			System.out.println("Complete " + (i+1) + " epoch.");
-			System.out.println(Evaluate.f1Value(predictFilePath));
-			iterTest.reset();
-		}
-		
+		artistSin.close();
 		System.out.println("\n\nExample complete");
 	}
 
-	private static void sampleCharactersFromNetwork( String predictFilePath, MultiLayerNetwork net,
+	private static void sampleCharactersFromNetwork( FileWriter predictFile, MultiLayerNetwork net,
 			ArtistIterator iter, int featureDays, Random rng ) throws IOException{
 		//Set up initialization. If no initialization: use a random character
-		FileWriter predictFile = new FileWriter(new File(predictFilePath));
+		
 		while(iter.hasNext()){
 			//Create input for initialization
 			DataSet data = iter.next();
@@ -130,15 +144,26 @@ public class GravesLSTMCharModelling {
 						predictFile.write("\n");
 					else predictFile.write(",");
 				}
+				List<Integer> valid = new ArrayList<Integer>();
+				for(int i = 0; i < 10; i++){
+					valid.add(output[k][i]);
+				}
+				Collections.sort(valid);
+				for(int i = 10; i<output[k].length; i++){
+					predictFile.write(String.valueOf(valid.get(5)));
+					if(i+1 == output[k].length)
+						predictFile.write("\n");
+					else predictFile.write(",");
+				}
 				INDArray initializationInput = Nd4j.zeros(1, iter.inputColumns(), 11);
-				int preChar = -1;
+				net.rnnClearPreviousState();
 				for(int i = 0; i <= 10; i++){
 					for(int j = 0; j < iter.inputColumns(); j++){
 						initializationInput.putScalar(new int[]{0,j,i}, input.getDouble(k,j,i));
-						if(input.getDouble(k,j,i) > 0) preChar = iter.getCharacterValue(j);
 					}
+					net.rnnTimeStep(initializationInput);
 				}
-				net.rnnClearPreviousState();
+				
 				INDArray out = net.rnnTimeStep(initializationInput);
 				out = out.tensorAlongDimension(out.size(2)-1,1,0);	//Gets the last time step output
 				for( int i=10; i<output[k].length; i++ ){
@@ -148,7 +173,6 @@ public class GravesLSTMCharModelling {
 						outputProbDistribution[j] = out.getDouble(0,j);
 					}
 					int sampledCharacter = sampleFromDistribution(outputProbDistribution,iter,rng);
-					preChar = sampledCharacter;
 					predictFile.write(String.valueOf(sampledCharacter));
 					if(i+1 == output[k].length)
 						predictFile.write("\n");
@@ -167,24 +191,24 @@ public class GravesLSTMCharModelling {
 	 * @param distribution Probability distribution over classes. Must sum to 1.0
 	 */
 	private static int sampleFromDistribution( double[] distribution, ArtistIterator iter, Random rng ){
-//		double d = 0;
-//		double sum = 0.0;
-//		for( int i=0; i<distribution.length; i++ ){
-//			sum += distribution[i];
-//			d += distribution[i]/iter.getCharacterValue(i);
-//		}
-//		//Should never happen if distribution is a valid probability distribution
-//		if(sum> 1.01 || sum < 0.99)
-//			throw new IllegalArgumentException("Distribution is invalid? d="+d+", sum="+sum);
-//		return (int) (1.0/d+0.5);
-		double d = rng.nextDouble();
+		double d = 0;
 		double sum = 0.0;
 		for( int i=0; i<distribution.length; i++ ){
 			sum += distribution[i];
-			if( d <= sum ) return iter.getCharacterValue(i);
+			d += distribution[i]/iter.getCharacterValue(i);
 		}
 		//Should never happen if distribution is a valid probability distribution
-		throw new IllegalArgumentException("Distribution is invalid? d="+d+", sum="+sum);
+		if(sum> 1.01 || sum < 0.99)
+			throw new IllegalArgumentException("Distribution is invalid? d="+d+", sum="+sum);
+		return (int) (1.0/d+0.5);
+//		double d = rng.nextDouble();
+//		double sum = 0.0;
+//		for( int i=0; i<distribution.length; i++ ){
+//			sum += distribution[i];
+//			if( d <= sum ) return iter.getCharacterValue(i);
+//		}
+//		//Should never happen if distribution is a valid probability distribution
+//		throw new IllegalArgumentException("Distribution is invalid? d="+d+", sum="+sum);
 //		int res = 0;
 //		for( int i=1; i<distribution.length; i++ ){
 //			if(distribution[res] < distribution[i]) 

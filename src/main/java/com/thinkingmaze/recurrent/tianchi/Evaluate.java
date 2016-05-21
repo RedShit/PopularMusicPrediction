@@ -5,12 +5,12 @@ import java.io.FileNotFoundException;
 import java.util.Scanner;
 
 public class Evaluate {
-	private static final String predictFilePath = "D:/MyEclipse/alibaba/mars_tianchi_predict_data.csv";
+	private static final String predictFilePath = "D:/MyEclipse/alibaba/mars_tianchi_predict_data12.csv";
 	public static String f1Value(String predictFilePath) throws FileNotFoundException{
-		int artistNum = 50;
+		int artistNum = 1;
 		int predictDays = 60;
 		Scanner sin = new Scanner(new File(predictFilePath));
-		double[][] predict = new double[artistNum*2][];
+		double[][] predict = new double[artistNum*3][];
 		int currIdx = 0;
 		while(sin.hasNextLine()){
 			predict[currIdx] = new double[predictDays];
@@ -22,12 +22,26 @@ public class Evaluate {
 		}
 		double f1 = 0.0;
 		double optF1 = 0.0;
+		double midF1 = 0.0;
 		for(int i = 0; i < artistNum; i++){
-			
-			int index = i*2;
+//			if(i == 26||i==39) continue;
+			int index = i*3;
 			double alpha = 0.0;
 			int N = predictDays;
 			double sum = 0;
+			for(int j = 0; j < N; j++){
+				double S = predict[index+2][j];
+				double T = predict[index][j];
+				if(T == 0) continue;
+				
+				alpha = alpha + ((S-T)/T)*((S-T)/T);
+				sum = sum + T;
+			}
+			alpha = Math.sqrt(alpha/N);
+//			System.out.println(i + " " + (1-alpha) + " " + Math.sqrt(sum));
+			f1 = f1 + (1.0-alpha)*Math.sqrt(sum);
+			optF1 = optF1 + Math.sqrt(sum);
+			sum = 0; alpha = 0;
 			for(int j = 0; j < N; j++){
 				double S = predict[index+1][j];
 				double T = predict[index][j];
@@ -37,13 +51,10 @@ public class Evaluate {
 				sum = sum + T;
 			}
 			alpha = Math.sqrt(alpha/N);
-			if(alpha > 1) alpha = 1;
-			System.out.println(i + " " + (1.0-alpha) + " " + Math.sqrt(sum));
-			f1 = f1 + (1.0-alpha)*Math.sqrt(sum);
-			optF1 = optF1 + Math.sqrt(sum);
+			midF1 = midF1 + (1.0-alpha)*Math.sqrt(sum);
 		}
 		sin.close();
-		return (f1 + " " + optF1 + " " + (100.0*f1/optF1) + "%");
+		return (f1 + " " + midF1 + " " + optF1 + " " + (100.0*f1/optF1) + "%");
 	}
 	public static void main(String[] args) throws FileNotFoundException{
 		System.out.println(f1Value(predictFilePath));

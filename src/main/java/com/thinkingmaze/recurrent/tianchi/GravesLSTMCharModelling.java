@@ -51,22 +51,29 @@ import org.nd4j.linalg.lossfunctions.LossFunctions.LossFunction;
  */
 public class GravesLSTMCharModelling {
 	public static void main( String[] args ) throws Exception {
-		Scanner artistSin = new Scanner(new File("D:/MyEclipse/alibaba/mars_tianchi_artist_id.csv"));
+		Scanner artistSin = new Scanner(new File("E:/ali/mars_tianchi_artist_id.csv"));
 		while(artistSin.hasNext()){
-			String artistId = "97de6333157f35467dff271d7afb0a23"; //artistSin.next();
+			//6a493121e53d83f9e119b02942d7c8fe
+			//40bbb0da5570702dd6ff3af5e9e3aea6
+			//e6e2fff03cc32ee9777de2c2ed5bac30
+			//e087f8842fe66efa5ccee42ff791e0ca
+			//c5eac1d455675dfbc99f6c70f7b3971f
+			//61dfd882204789d7d0f70fee2b901cef
+			//2b7fedeea967becd9408b896de8ff903
+			String artistId = "6f462b173b2d6d20a2c9fb1ec0fd2dda";artistSin.next();
 			int lstmLayerSize = 150;					//Number of units in each GravesLSTM layer
 			int miniBatchSize = 32;						//Size of mini batch to use when  training
-			int examplesPerEpoch = 10 * miniBatchSize;	//i.e., how many examples to learn on between generating samples
-			int exampleLength = 70;						//Length of each training example
-			int numEpochs = 15;							//Total number of training + sample generation epochs
+			int examplesPerEpoch = 20 * miniBatchSize;	//i.e., how many examples to learn on between generating samples
+			int exampleLength = 30;						//Length of each training example
+			int numEpochs = 5;							//Total number of training + sample generation epochs
 			// Above is Used to 'prime' the LSTM with a character sequence to continue/complete.
 			// Initialization characters must all be in CharacterIterator.getMinimalCharacterSet() by default
 			Random rng = new Random(12345);
 			
 			//Get a DataSetIterator that handles vectorization of text into something we can use to train
 			// our GravesLSTM network.
-			String trainFilePath = "D:/MyEclipse/alibaba/mars_tianchi_train_data.csv";
-			String testFilePath = "D:/MyEclipse/alibaba/mars_tianchi_test_data.csv";
+			String trainFilePath = "E:/ali/mars_tianchi_smooth_data.csv";
+			String testFilePath = "E:/ali/mars_tianchi_test_data.csv";
 			ArtistIterator iterTrain = 
 					new ArtistIterator(trainFilePath, miniBatchSize, 
 							examplesPerEpoch, exampleLength, true, artistId);
@@ -115,23 +122,22 @@ public class GravesLSTMCharModelling {
 			//Do training, and then generate and print samples from network
 			for( int i=0; i<numEpochs; i++ ){
 				net.fit(iterTrain);
-				String predictFilePath = "D:/MyEclipse/alibaba/"+artistId+".csv";
-				FileWriter predictFile = new FileWriter(new File(predictFilePath));
-				sampleCharactersFromNetwork(predictFile, net, iterTest, 30, rng);
+				String predictFilePath = "E:/ali/"+artistId+".csv";
+				sampleCharactersFromNetwork(predictFilePath, net, iterTest, 30, rng);
 				System.out.println("Complete " + (i+1) + " epoch.");
 				System.out.println(Evaluate.f1Value(predictFilePath));
-				iterTest.reset();
 			}
-			break;
+			//break;
 		}
 		artistSin.close();
-		System.out.println("\n\nExample complete");
+		System.out.println("\n\n complete");
 	}
 
-	private static void sampleCharactersFromNetwork( FileWriter predictFile, MultiLayerNetwork net,
+	private static void sampleCharactersFromNetwork( String predictFilePath, MultiLayerNetwork net,
 			ArtistIterator iter, int featureDays, Random rng ) throws IOException{
 		//Set up initialization. If no initialization: use a random character
-		
+		FileWriter predictFile = new FileWriter(new File(predictFilePath));
+		iter.reset();
 		while(iter.hasNext()){
 			//Create input for initialization
 			DataSet data = iter.next();

@@ -5,7 +5,6 @@ import java.io.FileNotFoundException;
 import java.util.Scanner;
 
 public class Evaluate {
-	private static final String predictFilePath = "D:/MyEclipse/alibaba/mars_tianchi_predict_data12.csv";
 	public static String f1Value(String predictFilePath) throws FileNotFoundException{
 		int artistNum = 1;
 		int predictDays = 60;
@@ -54,9 +53,18 @@ public class Evaluate {
 			midF1 = midF1 + (1.0-alpha)*Math.sqrt(sum);
 		}
 		sin.close();
+//		return f1;
 		return (f1 + " " + midF1 + " " + optF1 + " " + (100.0*f1/optF1) + "%");
 	}
-	public static void main(String[] args) throws FileNotFoundException{
-		System.out.println(f1Value(predictFilePath));
+	public static void main(String[] args) throws FileNotFoundException{  
+		Scanner artistSin = new Scanner(new File("E:/ali/mars_tianchi_artist_id.csv"));
+		double f1 = 0;
+		while(artistSin.hasNext()){
+			String predictFilePath = "E:/ali/"+artistSin.next()+".csv";
+			f1Value(predictFilePath);
+			System.out.println(f1Value(predictFilePath)+" "+ predictFilePath );
+		}
+		System.out.println(f1/8033);
+		artistSin.close();
 	}
 }

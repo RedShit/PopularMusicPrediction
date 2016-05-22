@@ -83,13 +83,13 @@ public class ArtistIterator implements DataSetIterator {
 			List<Integer> realSentence = new ArrayList<Integer>();
 			if(validArtistId != null && !validArtistId.equals(line[0]))
 				continue;
-			System.out.println(line[0] + " " + validArtistId);
+//			System.out.println(line[0] + " " + validArtistId);
 			this.artistId.add(line[0]);
 			double action = 0;
 			for(int i = 1; i < line.length; i++){
-				sentence.add(characterToIndex(Integer.parseInt(line[i])));
-				realSentence.add(Integer.parseInt(line[i]));
-				action += Integer.parseInt(line[i]);
+				sentence.add(characterToIndex(Double.parseDouble(line[i])));
+				realSentence.add((int) Double.parseDouble(line[i]));
+				action += Double.parseDouble(line[i]);
 			}
 			this.actionNumber.add(Math.sqrt(action));
 			this.file.add(sentence);
@@ -115,9 +115,9 @@ public class ArtistIterator implements DataSetIterator {
 		return out;
 	}
 	
-	public int characterToIndex(int value){
+	public int characterToIndex(double d){
 		for(int i = 1; i < characters.length; i++){
-			if(Math.abs(characters[i]-value) > Math.abs(characters[i-1]-value))
+			if(Math.abs(characters[i]-d) > Math.abs(characters[i-1]-d))
 				return i-1;
 		}
 		return characters.length-1;

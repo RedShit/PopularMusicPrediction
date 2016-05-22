@@ -86,8 +86,8 @@ def get_artist_id_file(artist_id_file_path, data_type):
         artist_id_file.writerow([key])
         
 if __name__ == '__main__':
-    load_actions_file_path = 'D:/MyEclipse/alibaba/mars_tianchi_user_actions.csv'
-    load_songs_file_path = 'D:/MyEclipse/alibaba/mars_tianchi_songs.csv'
+    load_actions_file_path = 'E:/ali/mars_tianchi_user_actions.csv'
+    load_songs_file_path = 'E:/ali/mars_tianchi_songs.csv'
     actions_type = load_data(load_actions_file_path, query_action_type='1')
     #actions_type = load_data(load_actions_file_path, query_action_type='2')
     #actions_type = load_data(load_actions_file_path, query_action_type='3')
@@ -95,8 +95,8 @@ if __name__ == '__main__':
     data_type = get_artist_actions(actions_type, songs)
     #data_type = get_artist_actions(actions_type, songs)
     #data_type = get_artist_actions(actions_type, songs)
-    train_file_path = 'D:/MyEclipse/alibaba/mars_tianchi_train_data.csv'
-    test_file_path = 'D:/MyEclipse/alibaba/mars_tianchi_test_data.csv'
+    train_file_path = 'E:/ali/mars_tianchi_train_data.csv'
+    test_file_path = 'E:/ali/mars_tianchi_test_data.csv'
     create_data_file(train_file_path, test_file_path, data_type)
-    artist_id_file_path = 'D:/MyEclipse/alibaba/mars_tianchi_artist_id.csv'
+    artist_id_file_path = 'E:/ali/mars_tianchi_artist_id.csv'
     get_artist_id_file(artist_id_file_path, data_type)

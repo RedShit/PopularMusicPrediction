@@ -51,7 +51,7 @@ import org.nd4j.linalg.lossfunctions.LossFunctions.LossFunction;
  */
 public class GravesLSTMCharModelling {
 	public static void main( String[] args ) throws Exception {
-		Scanner artistSin = new Scanner(new File("E:/ali/mars_tianchi_artist_id.csv"));
+		Scanner artistSin = new Scanner(new File("D:/MyEclipse/alibaba/mars_tianchi_artist_id.csv"));
 		while(artistSin.hasNext()){
 			//6a493121e53d83f9e119b02942d7c8fe
 			//40bbb0da5570702dd6ff3af5e9e3aea6
@@ -60,11 +60,11 @@ public class GravesLSTMCharModelling {
 			//c5eac1d455675dfbc99f6c70f7b3971f
 			//61dfd882204789d7d0f70fee2b901cef
 			//2b7fedeea967becd9408b896de8ff903
-			String artistId = "6f462b173b2d6d20a2c9fb1ec0fd2dda";artistSin.next();
+			String artistId = artistSin.next();
 			int lstmLayerSize = 150;					//Number of units in each GravesLSTM layer
 			int miniBatchSize = 32;						//Size of mini batch to use when  training
 			int examplesPerEpoch = 20 * miniBatchSize;	//i.e., how many examples to learn on between generating samples
-			int exampleLength = 30;						//Length of each training example
+			int exampleLength = 20;						//Length of each training example
 			int numEpochs = 5;							//Total number of training + sample generation epochs
 			// Above is Used to 'prime' the LSTM with a character sequence to continue/complete.
 			// Initialization characters must all be in CharacterIterator.getMinimalCharacterSet() by default
@@ -72,8 +72,8 @@ public class GravesLSTMCharModelling {
 			
 			//Get a DataSetIterator that handles vectorization of text into something we can use to train
 			// our GravesLSTM network.
-			String trainFilePath = "E:/ali/mars_tianchi_smooth_data.csv";
-			String testFilePath = "E:/ali/mars_tianchi_test_data.csv";
+			String trainFilePath = "D:/MyEclipse/alibaba/mars_tianchi_train_data.csv";
+			String testFilePath = "D:/MyEclipse/alibaba/mars_tianchi_test_data.csv";
 			ArtistIterator iterTrain = 
 					new ArtistIterator(trainFilePath, miniBatchSize, 
 							examplesPerEpoch, exampleLength, true, artistId);
@@ -122,7 +122,7 @@ public class GravesLSTMCharModelling {
 			//Do training, and then generate and print samples from network
 			for( int i=0; i<numEpochs; i++ ){
 				net.fit(iterTrain);
-				String predictFilePath = "E:/ali/"+artistId+".csv";
+				String predictFilePath = "D:/MyEclipse/alibaba/"+artistId+".csv";
 				sampleCharactersFromNetwork(predictFilePath, net, iterTest, 30, rng);
 				System.out.println("Complete " + (i+1) + " epoch.");
 				System.out.println(Evaluate.f1Value(predictFilePath));

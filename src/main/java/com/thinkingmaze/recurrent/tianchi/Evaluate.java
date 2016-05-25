@@ -2,10 +2,12 @@ package com.thinkingmaze.recurrent.tianchi;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Scanner;
 
 public class Evaluate {
-	public static String f1Value(String predictFilePath) throws FileNotFoundException{
+	public static double f1Value(String predictFilePath) throws FileNotFoundException{
 		int artistNum = 1;
 		int predictDays = 60;
 		Scanner sin = new Scanner(new File(predictFilePath));
@@ -14,6 +16,7 @@ public class Evaluate {
 		while(sin.hasNextLine()){
 			predict[currIdx] = new double[predictDays];
 			String line = sin.nextLine();
+//			System.out.println(line);
 			String[] strs = line.split(",");
 			for(int i = 0; i < strs.length; i++)
 				predict[currIdx][i] = Double.valueOf(strs[i]);
@@ -29,7 +32,7 @@ public class Evaluate {
 			int N = predictDays;
 			double sum = 0;
 			for(int j = 0; j < N; j++){
-				double S = predict[index+2][j];
+				double S = Math.min(predict[index+2][j], predict[index+1][j]*1.1);
 				double T = predict[index][j];
 				if(T == 0) continue;
 				
@@ -53,18 +56,25 @@ public class Evaluate {
 			midF1 = midF1 + (1.0-alpha)*Math.sqrt(sum);
 		}
 		sin.close();
-//		return f1;
-		return (f1 + " " + midF1 + " " + optF1 + " " + (100.0*f1/optF1) + "%");
+		return f1;
+//		return (f1 + " " + midF1 + " " + optF1);
 	}
-	public static void main(String[] args) throws FileNotFoundException{  
-		Scanner artistSin = new Scanner(new File("E:/ali/mars_tianchi_artist_id.csv"));
+	public static void main(String[] args) throws IOException{  
+		Scanner artistSin = new Scanner(new File("D:/MyEclipse/alibaba/mars_tianchi_artist_id.csv"));
+		String resultFilePath = "D:/MyEclipse/alibaba/result.csv";
+		FileWriter resultFile = new FileWriter(new File(resultFilePath));
 		double f1 = 0;
 		while(artistSin.hasNext()){
-			String predictFilePath = "E:/ali/"+artistSin.next()+".csv";
-			f1Value(predictFilePath);
-			System.out.println(f1Value(predictFilePath)+" "+ predictFilePath );
+			String artistId = artistSin.next();
+//			resultFile.write(artistId+",");
+			String predictFilePath = "D:/MyEclipse/alibaba/"+artistId+".csv";
+			f1 += f1Value(predictFilePath);
+//			Scanner sin = new Scanner(new File(predictFilePath));
+//			resultFile.write(sin.next()+"\n");
+//			sin.close();
 		}
-		System.out.println(f1/8033);
+		System.out.println(f1/8003);
+		resultFile.close();
 		artistSin.close();
 	}
 }

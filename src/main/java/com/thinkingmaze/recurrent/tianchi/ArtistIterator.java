@@ -163,6 +163,8 @@ public class ArtistIterator implements DataSetIterator {
 		//Allocate space:
 		INDArray input = Nd4j.zeros(num,numCharacters,exampleLength);
 		INDArray labels = Nd4j.zeros(num,numCharacters,exampleLength);
+		INDArray featuresMask = Nd4j.zeros(num, exampleLength);
+        INDArray labelsMask = Nd4j.zeros(num, exampleLength);
 				
 		//Randomly select a subset of the file. No attempt is made to avoid overlapping subsets
 		// of the file in the same minibatch
@@ -175,21 +177,23 @@ public class ArtistIterator implements DataSetIterator {
 			if(file.get(artistIdx).size()<exampleLength+1)
 				throw new NoSuchElementException("artistId = "+artistId.get(artistIdx)+" length < "+exampleLength+1);
 			nextArtistId.add(artistId.get(artistIdx));
-			int startIdx = (int) (rng.nextDouble()*(file.get(artistIdx).size()-exampleLength-1));
+			int startIdx = (int) (rng.nextDouble()*file.get(artistIdx).size());
 			if(this.alwaysRandomData == false)
 				startIdx = 0;
 			int currCharIdx = file.get(artistIdx).get(startIdx);
-			for( int j=0; j<exampleLength; j++ ){
+			for( int j=0; j<exampleLength&&startIdx+j+1<file.get(artistIdx).size(); j++ ){
 				int nextCharIdx = file.get(artistIdx).get(startIdx+j+1);
 				input.putScalar(new int[]{i,currCharIdx,j}, 1.0);
 				labels.putScalar(new int[]{i,nextCharIdx,j}, 1.0);
 				realOutput[i][j] = realFile.get(artistIdx).get(startIdx+j+1);
 				currCharIdx = nextCharIdx;
+				featuresMask.putScalar(new int[]{i,j}, 1.0);
+				labelsMask.putScalar(new int[]{i,j}, 1.0);
 			}
 		}
 		
 		examplesSoFar += num;
-		return new DataSet(input,labels);
+		return new DataSet(input,labels,featuresMask,labelsMask);
 	}
 	public int totalExamples() {
 		return numExamplesToFetch;

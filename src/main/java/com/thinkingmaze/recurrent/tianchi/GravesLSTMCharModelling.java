@@ -53,13 +53,6 @@ public class GravesLSTMCharModelling {
 	public static void main( String[] args ) throws Exception {
 		Scanner artistSin = new Scanner(new File("D:/MyEclipse/alibaba/mars_tianchi_artist_id.csv"));
 		while(artistSin.hasNext()){
-			//6a493121e53d83f9e119b02942d7c8fe
-			//40bbb0da5570702dd6ff3af5e9e3aea6
-			//e6e2fff03cc32ee9777de2c2ed5bac30
-			//e087f8842fe66efa5ccee42ff791e0ca
-			//c5eac1d455675dfbc99f6c70f7b3971f
-			//61dfd882204789d7d0f70fee2b901cef
-			//2b7fedeea967becd9408b896de8ff903
 			String artistId = artistSin.next();
 			int lstmLayerSize = 150;					//Number of units in each GravesLSTM layer
 			int miniBatchSize = 32;						//Size of mini batch to use when  training

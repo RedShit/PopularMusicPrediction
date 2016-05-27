@@ -51,24 +51,8 @@ def get_artist_actions(actions, songs):
             res[artist_id][gmt_create] = tmp_actions[gmt_create] + res[artist_id][gmt_create]
     return res
 
-def get_predict(actions_type, gmt_time, key, \
-                            feature_days = 121, predict_days = 60):
-    res = []
-    res.append(key)
-    for x in range(-feature_days, 0):
-        actions_type.setdefault(gmt_time+x, 0)
-        if(actions_type[x+gmt_time]<0):
-            continue
-        res.append(actions_type[x+gmt_time])
-    for x in range(0, predict_days):
-        actions_type.setdefault(gmt_time+x, 0)
-        res.append(actions_type[x+gmt_time])
-    return [str(i) for i in res]
-
-def create_data_file(train_file_path, test_file_path, data_type, \
-                     feature_days = 121, predict_days = 60, gmt_start = 16495, predict_gmt = 16618):
-    train_file = csv.writer(file(train_file_path, 'wb'))
-    test_file = csv.writer(file(test_file_path, 'wb'))
+def create_data_file(dataset_file_path, data_type, gmt_start = 16495, predict_gmt = 16626): #16738, 16626
+    dataset_file = csv.writer(file(dataset_file_path, 'wb'))
     for key in data_type.keys():
         actions_type = data_type[key]
         line = []
@@ -76,9 +60,7 @@ def create_data_file(train_file_path, test_file_path, data_type, \
         for gmt_time in range(gmt_start,predict_gmt):
             actions_type.setdefault(gmt_time, 0)
             line.append(actions_type[gmt_time])
-        train_file.writerow([str(i) for i in line])
-        line = get_predict(actions_type, predict_gmt, key)
-        test_file.writerow(line)
+        dataset_file.writerow([str(i) for i in line])
 
 def get_artist_id_file(artist_id_file_path, data_type):
     artist_id_file = csv.writer(file(artist_id_file_path, 'wb'))
@@ -95,8 +77,7 @@ if __name__ == '__main__':
     data_type = get_artist_actions(actions_type, songs)
     #data_type = get_artist_actions(actions_type, songs)
     #data_type = get_artist_actions(actions_type, songs)
-    train_file_path = 'D:/MyEclipse/alibaba/mars_tianchi_train_data.csv'
-    test_file_path = 'D:/MyEclipse/alibaba/mars_tianchi_test_data.csv'
-    create_data_file(train_file_path, test_file_path, data_type)
+    dataset_file_path = 'D:/MyEclipse/alibaba/mars_tianchi_data.csv'
+    create_data_file(dataset_file_path, data_type)
     artist_id_file_path = 'D:/MyEclipse/alibaba/mars_tianchi_artist_id.csv'
     get_artist_id_file(artist_id_file_path, data_type)

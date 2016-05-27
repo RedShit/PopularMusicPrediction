@@ -11,9 +11,9 @@ public class TrainLinear extends Training {
 	public TrainLinear(LS ls) {
 		super.ls = ls;
 	}
-
+	
 	@Override
-	public void train(List<Integer> data) {
+	public void trainA(List<Integer> data) {
 		// TODO Auto-generated method stub
 		double avrY = 0, avrX = 0;
 		for(int x = 0; x < data.size(); x++){
@@ -33,6 +33,19 @@ public class TrainLinear extends Training {
 		ls.setA(aZ/aM);
 	}
 
+	@Override
+	public void trainB(List<Integer> data) {
+		// TODO Auto-generated method stub
+		double bZ = 0, bM = 0;
+		for(int x = 0; x < data.size(); x++){
+			double X = x;
+			double Y = data.get(x);
+			bZ += Y - ls.getA()*X;
+			bM += 1.0;
+		}
+		ls.setB(bZ/bM);
+	}
+	
 	@Override
 	public double output(int x) {
 		// TODO Auto-generated method stub
@@ -70,10 +83,10 @@ public class TrainLinear extends Training {
 		List<Integer> noise = new ArrayList<Integer>();
 		int lValue = Integer.MAX_VALUE;
 		int rValue = Integer.MIN_VALUE;
-		for(int x = Math.max(0, data.size()-5); x < data.size(); x++){
-			noise.add((int) (data.get(x)-output(x)));
-			lValue = (int) Math.min(lValue, data.get(x)-output(x));
-			rValue = (int) Math.max(rValue, data.get(x)-output(x));
+		for(int x = 0; x < data.size(); x++){
+			noise.add(data.get(x));
+			lValue = (int) Math.min(lValue, data.get(x));
+			rValue = (int) Math.max(rValue, data.get(x));
 		}
 		int res = 0;
 		Collections.sort(noise);

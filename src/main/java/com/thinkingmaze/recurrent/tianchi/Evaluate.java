@@ -63,17 +63,14 @@ public class Evaluate {
 		Scanner artistSin = new Scanner(new File("D:/MyEclipse/alibaba/mars_tianchi_artist_id.csv"));
 		String resultFilePath = "D:/MyEclipse/alibaba/result.csv";
 		FileWriter resultFile = new FileWriter(new File(resultFilePath));
-		double f1 = 0;
 		while(artistSin.hasNext()){
 			String artistId = artistSin.next();
-//			resultFile.write(artistId+",");
+			resultFile.write(artistId+",");
 			String predictFilePath = "D:/MyEclipse/alibaba/"+artistId+".csv";
-			f1 += f1Value(predictFilePath);
-//			Scanner sin = new Scanner(new File(predictFilePath));
-//			resultFile.write(sin.next()+"\n");
-//			sin.close();
+			Scanner sin = new Scanner(new File(predictFilePath));
+			resultFile.write(sin.next()+"\n");
+			sin.close();
 		}
-		System.out.println(f1/8003);
 		resultFile.close();
 		artistSin.close();
 	}

@@ -66,7 +66,7 @@ public class RegressionFunctions {
     public static void main(String[] args) throws IOException{
 
     	Scanner artistSin = new Scanner(new File("D:/MyEclipse/alibaba/mars_tianchi_artist_id.csv"));
-		String filePath = "D:/MyEclipse/alibaba/mars_tianchi_test_data.csv";
+		String filePath = "D:/MyEclipse/alibaba/mars_tianchi_data.csv";
 		ArtistIterator iter = new ArtistIterator(filePath, "all");
 		double f1 = 0;
 		while(artistSin.hasNext()){

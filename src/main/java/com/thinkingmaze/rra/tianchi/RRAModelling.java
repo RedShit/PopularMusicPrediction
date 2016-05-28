@@ -78,20 +78,18 @@ public class RRAModelling {
 			System.out.print(mid.get(5)+" "+mid.get(4)+" "+model.output(20)+"\n");
 			for(int i = 0; i < data.size(); i++){
 				if(i<=N-60) continue;
-				if(e2>0.15 || e1<e2*1.2) predictData.add(mid.get(5-t));//(int) model.median(trainBData));
+				if(e2>0.15 || e1<e2*1.2) predictData.add(mid.get(6-t));//(int) model.median(trainBData));
 				else if(i<=N-55) predictData.add((int) (model.output(i-(N-60)+20)+0.5));
 				else predictData.add((int) (model.output(25)+0.5));
 			}
 			for(int i = 0; i < predictData.size(); i++){
 				predictFile.write(String.valueOf(predictData.get(i)));
-				predictFile.write(i+1==data.size()?"\n":",");
+				predictFile.write(i+1==predictData.size()?"\n":",");
 			}
 			f1 += Evaluate.f1Value(predictData, testData);
 			predictData = new ArrayList<Integer>();
 			for(int i = 0; i < data.size(); i++){
 				if(i<=N-60) continue;
-				predictFile.write(String.valueOf(mid.get(4-t)));
-				predictFile.write(i+1==data.size()?"\n":",");
 				predictData.add(mid.get(4-t));
 			}
 			predictFile.close();
@@ -99,7 +97,7 @@ public class RRAModelling {
 			predictData = new ArrayList<Integer>();
 			for(int i = 0; i < data.size(); i++){
 				if(i<=N-60) continue;
-				predictData.add(mid.get(4));
+				predictData.add(mid.get(5));
 			}
 			f3 += Evaluate.f1Value(predictData, testData);
 			System.out.println(ls.toString());

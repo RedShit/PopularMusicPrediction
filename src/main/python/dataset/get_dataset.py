@@ -51,7 +51,7 @@ def get_artist_actions(actions, songs):
             res[artist_id][gmt_create] = tmp_actions[gmt_create] + res[artist_id][gmt_create]
     return res
 
-def create_data_file(dataset_file_path, data_type, gmt_start = 16495, predict_gmt = 16626): #16738, 16626
+def create_data_file(dataset_file_path, data_type, gmt_start = 16495, predict_gmt = 16738): #16738, 16626
     dataset_file = csv.writer(file(dataset_file_path, 'wb'))
     for key in data_type.keys():
         actions_type = data_type[key]

@@ -36,14 +36,12 @@ public class TrainLinear extends Training {
 	@Override
 	public void trainB(List<Integer> data) {
 		// TODO Auto-generated method stub
-		double bZ = 0, bM = 0;
+		List<Double> res = new ArrayList<Double>();
 		for(int x = 0; x < data.size(); x++){
-			double X = x;
-			double Y = data.get(x);
-			bZ += Y - ls.getA()*X;
-			bM += 1.0;
+			res.add(data.get(x) - ls.getA()*x);
 		}
-		ls.setB(bZ/bM);
+		Collections.sort(res);
+		ls.setB(res.get(res.size()/2));
 	}
 	
 	@Override
@@ -51,21 +49,39 @@ public class TrainLinear extends Training {
 		// TODO Auto-generated method stub
 		return ls.f(x);
 	}
+	
+	private static double variance(List<Double> data){
+		List<Double> tData = new ArrayList<Double>();
+		for(int i = 0; i < data.size(); i++){
+			tData.add(data.get(i));
+		}
+		double maxValue = Integer.MIN_VALUE;
+		double avr = 0;
+		Collections.sort(tData);
+		maxValue = tData.get(2)+1;
+		for(int x = 0; x < tData.size(); x++){
+			double value = tData.get(x)/maxValue;
+			avr += value;
+		}
+		avr/=tData.size();
+		double var = 0;
+		for(int x = 0; x < tData.size(); x++){
+			double value = tData.get(x)/maxValue;
+			var += (value-avr)*(value-avr);
+		}
+		var = Math.sqrt(var);
+		var /= data.size();
+		return var;
+	}
 
 	@Override
 	public double error(List<Integer> data) {
 		// TODO Auto-generated method stub
-		double res = 0;
-		double avr = 0;
+		List<Double> tData = new ArrayList<Double>();
 		for(int x = 0; x < data.size(); x++){
-			avr += data.get(x)-output(x);
+			tData.add(data.get(x)-output(x));
 		}
-		avr /= data.size();
-		for(int x = 0; x < data.size(); x++){
-			double a = data.get(x)-output(x)-avr;
-			res += a*a;
-		}
-		return res;
+		return variance(tData);
 	}
 
 	public double error(List<Integer> data, int x) {
